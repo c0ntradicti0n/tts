@@ -10,11 +10,11 @@ Text input must be chunked for that into sentences producing single soundfiles, 
 
 ## Installation
 ``` sh 
-$ git clone git@github.com:c0ntradicti0n/text2speech.git
-$ cd text2speech
-$ python -m venv venv
-$ . activate /venv/bin/activate
-$ pip install -r requirements.txt
+git clone git@github.com:c0ntradicti0n/text2speech.git
+cd text2speech
+python -m venv venv
+. activate /venv/bin/activate
+pip install -r requirements.txt
 ```
 
 
@@ -26,12 +26,12 @@ $ pip install -r requirements.txt
 for Ubuntu
 
 ``` sh
-$ sudo apt-get install oggvideotools
+sudo apt-get install oggvideotools
 ```
 ## Usage
 
 ``` sh
-$ python tts.py --help                                                                            3s  + ✱ ●  ~/P/text2speech 
+python tts.py --help                                                                            3s  + ✱ ●  ~/P/text2speech 
 usage: tts.py [-h] [-i [INPUT_FILE]] [-t [TMP_DIR]] out
 
 Process some integers.
@@ -52,9 +52,9 @@ Pipe or type the text into the script:
 **It will create ogg-Files!**
 
 ``` sh
-$ . activate /venv/bin/activate
+. activate /venv/bin/activate
 
-$ cat test.txt | python tts.py out.ogg
+cat test.txt | python tts.py out.ogg
 
 ```
 
