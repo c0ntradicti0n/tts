@@ -1,6 +1,6 @@
 # Simple Text To Speech on command line
 
-Using some modern TTS package with simple use in bash.
+Using some modern TTS package with simple use in  sh.
 
 At the moment:
 
@@ -9,7 +9,7 @@ At the moment:
 Text input must be chunked for that into sentences producing single soundfiles, that are concatenated finally.
 
 ## Installation
-```bash 
+``` sh 
 $ git clone git@github.com:c0ntradicti0n/text2speech.git
 $ cd text2speech
 $ python -m venv venv
@@ -25,12 +25,12 @@ $ pip install -r requirements.txt
 
 for Ubuntu
 
-```bash
+``` sh
 $ sudo apt-get install oggvideotools
 ```
 ## Usage
 
-```bash
+``` sh
 $ python tts.py --help                                                                            3s  + ✱ ●  ~/P/text2speech 
 usage: tts.py [-h] [-i [INPUT_FILE]] [-t [TMP_DIR]] out
 
@@ -51,7 +51,7 @@ Pipe or type the text into the script:
 
 **It will create ogg-Files!**
 
-```bash
+``` sh
 $ . activate /venv/bin/activate
 
 $ cat test.txt | python tts.py out.ogg
