@@ -1,4 +1,5 @@
 import argparse
+
 parser = argparse.ArgumentParser(description='Process some integers.')
 parser.add_argument('out', type=str,
                     help='name of output_file')
@@ -9,7 +10,6 @@ parser.add_argument('-t', '--tmp_dir', nargs='?', type=str, default="/tmp/",
                     help='directory for temporary files')
 args = parser.parse_args()
 print(args)
-
 
 import os
 import sys
@@ -28,10 +28,8 @@ tacotron2 = Tacotron2.from_hparams(source="speechbrain/tts-tacotron2-ljspeech", 
 hifi_gan = HIFIGAN.from_hparams(source="speechbrain/tts-hifigan-ljspeech", savedir="tmpdir_vocoder")
 
 
-
-
 def i_path(i, path):
-    return args.tmp_dir + f"{i}_{path}.ogg"
+    return args.tmp_dir + f"{i}_{os.path.basename(path)}.ogg"
 
 
 def source():
@@ -44,24 +42,31 @@ def source():
 
 
 i = 0
+created_temp_files = []
 for line in source():
-    for sentence in split_into_sentences(line):
+    sentences = split_into_sentences(line)
+    for sentence in sentences:
         audio_path = i_path(i, args.out)
 
-        # Running the TTS
-        mel_output, mel_length, alignment = tacotron2.encode_text(sentence)
+        try:
+            # Running the TTS
+            mel_output, mel_length, alignment = tacotron2.encode_text(sentence)
 
-        # Running Vocoder (spectrogram-to-waveform)
-        waveforms = hifi_gan.decode_batch(mel_output)
+            # Running Vocoder (spectrogram-to-waveform)
+            waveforms = hifi_gan.decode_batch(mel_output)
 
-        # Save the waverform
-        torchaudio.save(audio_path, waveforms.squeeze(1), 22050)
+            # Save the waverform
+            torchaudio.save(audio_path, waveforms.squeeze(1), 22050)
 
-        i += 1
-        logging.info(f"processed item {i} {len(sentence)=}: {sentence=}  ")
+            i += 1
+            created_temp_files.append(audio_path)
+            logging.info(f"processed item {i}/{len(sentences) - 1} {len(sentence)=}: {sentence=}  ")
+        except Exception as e:
+            logging.error("Error at item {i} {len(sentence)=}: {sentence=} ", exc_info=True)
 
-os.system(f"rm {args.out}.ogg")
+out_path = args.out.replace(".ogg", "") + ".ogg"
 
-out_path = args.out.replace(".ogg", "")
-os.system(f"oggCat {args.out}.ogg {' '.join(i_path(j, args.out) for j in range(0, i))}")
-os.system(f"rm {' '.join(i_path(j, args.out) for j in range(0, i))}")
+logging.info(f"writing result to {out_path}")
+os.system(f"oggCat -x {os.path.basename(out_path)}  {' '.join(created_temp_files)}")
+os.system(f"mv {os.path.basename(out_path)} {out_path}")
+os.system(f"rm  -f   {' '.join(created_temp_files)}")

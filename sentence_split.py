@@ -11,6 +11,13 @@ acronyms = "([A-Z][.][A-Z][.](?:[A-Z][.])?)"
 websites = "[.](com|net|org|io|gov)"
 digits = "([0-9])"
 
+def chunker(iter, size):
+    chunks = [];
+    if size < 1:
+        raise ValueError('Chunk size must be greater than 0.')
+    for i in range(0, len(iter), size):
+        chunks.append(iter[i:(i+size)])
+    return chunks
 
 def split_into_sentences(text, ):
     text = " " + text + "  "
@@ -38,6 +45,7 @@ def split_into_sentences(text, ):
     sentences = text.split("<stop>")
     sentences = sentences[:-1]
     sentences = [s.strip() for s in sentences]
+    sentences = [s for s in sentences if s]
 
     # split too long sentences also at ","
     comma_texts = []
@@ -50,6 +58,10 @@ def split_into_sentences(text, ):
                 res = sentence.split(", and")
             if len(res) < 2:
                 res = sentence.split(", ")
+            if len(res) < 2:
+                res = sentence.split(" and ")
+            if len(res) < 2:
+                res = chunker(sentence.split(" "), 30)
             if len(res) > 1:
                 comma_texts.append((i, sentence.split(", ")))
             else:
