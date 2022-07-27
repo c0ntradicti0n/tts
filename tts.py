@@ -74,9 +74,10 @@ with concurrent.futures.ThreadPoolExecutor(max_workers = 15) as executor:
 
     for thread in threads:
         thread.result()
+
 out_path = args.out.replace(".ogg", "") + ".ogg"
 
-
+print (created_temp_files)
 created_temp_files = [val for i, val in list(sorted(args.tmp_dir, key = lambda i_path:
                           (i_path[0][0]*1000)+i_path[0][1]))]
 logging.info(f"writing result to {out_path}")
