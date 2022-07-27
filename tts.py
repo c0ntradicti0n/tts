@@ -1,4 +1,6 @@
 import argparse
+import concurrent
+from concurrent.futures import ThreadPoolExecutor
 
 parser = argparse.ArgumentParser(description='Process some integers.')
 parser.add_argument('out', type=str,
@@ -28,8 +30,8 @@ tacotron2 = Tacotron2.from_hparams(source="speechbrain/tts-tacotron2-ljspeech", 
 hifi_gan = HIFIGAN.from_hparams(source="speechbrain/tts-hifigan-ljspeech", savedir="tmpdir_vocoder")
 
 
-def i_path(i, path):
-    return args.tmp_dir + f"{i}_{os.path.basename(path)}.ogg"
+def i_path(j, i, path):
+    return args.tmp_dir + f"{j}_{i}_{os.path.basename(path)}.ogg"
 
 
 def source():
@@ -41,31 +43,42 @@ def source():
             yield from f.readlines()
 
 
-i = 0
 created_temp_files = []
-for line in source():
-    sentences = split_into_sentences(line)
-    for sentence in sentences:
-        audio_path = i_path(i, args.out)
 
-        try:
-            # Running the TTS
-            mel_output, mel_length, alignment = tacotron2.encode_text(sentence)
 
-            # Running Vocoder (spectrogram-to-waveform)
-            waveforms = hifi_gan.decode_batch(mel_output)
+def generate_audio_clip(audio_path, sentence, i):
+    global created_temp_files, alignment, e
+    try:
+        # Running the TTS
+        mel_output, mel_length, alignment = tacotron2.encode_text(sentence)
 
-            # Save the waverform
-            torchaudio.save(audio_path, waveforms.squeeze(1), 22050)
+        # Running Vocoder (spectrogram-to-waveform)
+        waveforms = hifi_gan.decode_batch(mel_output)
 
-            i += 1
-            created_temp_files.append(audio_path)
-            logging.info(f"processed item {i}/{len(sentences) - 1} {len(sentence)=}: {sentence=}  ")
-        except Exception as e:
-            logging.error("Error at item {i} {len(sentence)=}: {sentence=} ", exc_info=True)
+        # Save the waverform
+        torchaudio.save(audio_path, waveforms.squeeze(1), 22050)
 
+        created_temp_files.append((i,audio_path))
+        logging.info(f"processed item {i} {len(sentence)=}: {sentence=}  ")
+    except Exception as e:
+        logging.error(f"Error at item {i} {len(sentence)=}: {sentence=} ", exc_info=True)
+
+threads = []
+with concurrent.futures.ThreadPoolExecutor(max_workers = 15) as executor:
+    for i_line, line in enumerate(source()):
+        sentences = split_into_sentences(line)
+        for i_sentence, sentence in enumerate(sentences):
+            audio_path = i_path(i_line, i_sentence, args.out)
+
+            threads.append(executor.submit(generate_audio_clip, audio_path, sentence, (i_line, i_sentence)))
+
+    for thread in threads:
+        thread.result()
 out_path = args.out.replace(".ogg", "") + ".ogg"
 
+
+created_temp_files = [val for i, val in list(sorted(args.tmp_dir, key = lambda i_path:
+                          (i_path[0][0]*1000)+i_path[0][1]))]
 logging.info(f"writing result to {out_path}")
 os.system(f"oggCat -x {os.path.basename(out_path)}  {' '.join(created_temp_files)}")
 os.system(f"mv {os.path.basename(out_path)} {out_path}")
