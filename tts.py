@@ -82,5 +82,6 @@ created_temp_files = [val for i, val in list(sorted(created_temp_files, key = la
                           (i_path[0][0]*1000)+i_path[0][1]))]
 logging.info(f"writing result to {out_path}")
 os.system(f"oggCat -x {os.path.basename(out_path)}  {' '.join(created_temp_files)}")
-os.system(f"mv {os.path.basename(out_path)} {out_path}")
+if not out_path == os.path.basename(out_path):
+    os.system(f"mv {os.path.basename(out_path)} {out_path}")
 os.system(f"rm  -f   {' '.join(created_temp_files)}")
