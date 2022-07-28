@@ -64,7 +64,7 @@ def generate_audio_clip(audio_path, sentence, i):
         logging.error(f"Error at item {i} {len(sentence)=}: {sentence=} ", exc_info=True)
 
 threads = []
-with concurrent.futures.ThreadPoolExecutor(max_workers = 5) as executor:
+with concurrent.futures.ThreadPoolExecutor(max_workers = 3) as executor:
     for i_line, line in enumerate(source()):
         sentences = split_into_sentences(line)
         for i_sentence, sentence in enumerate(sentences):
